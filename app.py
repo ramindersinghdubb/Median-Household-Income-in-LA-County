@@ -123,6 +123,7 @@ plot to view additional information on median household income by racial demogra
 
 2. Data for median household income in the past 12 months (in 2023 inflation-adjusted dollars) were taken from the United States Census Bureau <u style='color:#800000;'><a href="https://www.census.gov/programs-surveys/acs.html" style='color:#800000;'>American Community Survey</a></u> (ACS codes B19013, B19013A, B19013B, B19013C, B19013D, B19013E, B19013F, B19013G, B19013H and B19013I).
 3. Redistricting over the years affects the availability of some census tracts in certain cities. Unavailability of data for certain census tracts during select years may affect whether or not census tracts are displayed on the map. For these reasons, some census tracts and their data may only be available for a partial range of years.
+4. The American Community Survey caps the imputation of median household incomes at $250k. As a result, some data on select census tracts may be unavailable in virtue of being higher than those permissible by these thresholds.
 
 ### <b style='color:#800000;'>Disclaimer</b>
 
