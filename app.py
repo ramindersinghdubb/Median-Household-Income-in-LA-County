@@ -176,6 +176,7 @@ app = dash.Dash(__name__,
                                      ]
                )
 server=app.server
+app.title = 'Median Household Income in Los Angeles County'
 
 
 
