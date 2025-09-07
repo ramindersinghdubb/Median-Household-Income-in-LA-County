@@ -102,7 +102,7 @@ geodata_plot = html.Div([
 footer_string = """
 ### <b style='color:#800000;'>Information</b>
 
-This website allows you to view median household income in the past 12 months (in 2023 Consumer Price Index-adjusted dollars) for various census tracts across various cities in Los Angeles county. <br>
+This website allows you to view median household income in the past 12 months (in Consumer Price Index-adjusted dollars) for various census tracts across various cities in Los Angeles county. <br>
 
 Use the dropdowns to choose a city of interest and a year of interest. You can also choose to visualize median household income for various racial demographics. <br>
 
@@ -194,7 +194,7 @@ app.layout = dbc.Container([
             ),
     # ------------ Subtitle ------------ #
     html.Div([
-        html.P("Median Household Income (in 2023 Consumer Price Index Adjusted Dollars) for Census Tracts across Cities and Census-Designated Places in Los Angeles County, 2010 to 2023")
+        html.P("Median Household Income (in Consumer Price Index Adjusted Dollars) for Census Tracts across Cities and Census-Designated Places in Los Angeles County, 2010 to 2023")
     ], style = {'display': 'block',
                 'color': ObsidianBlack_color,
                 'margin': '-0.5em 0',
@@ -1112,7 +1112,7 @@ app.clientside_callback(
                 'uirevision': true,
                 'paper_bgcolor': '#FEF9F3',
                 'plot_bgcolor': '#FEF9F3',
-                'title': {'text': `Median Household Income (2023 CPI-Adjusted Dollars), ${Math.min(...x_array)} to ${Math.max(...x_array)}`,
+                'title': {'text': `Median Household Income (CPI-Adjusted Dollars), ${Math.min(...x_array)} to ${Math.max(...x_array)}`,
                           'x': 0.05,
                           },
                 'xaxis': {'title': {'text': 'Year', 'ticklabelstandoff': 10}, 'showgrid': false, 'tickvals': x_array},
