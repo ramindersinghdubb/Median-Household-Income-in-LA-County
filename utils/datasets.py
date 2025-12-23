@@ -11,7 +11,7 @@ from util_func import (
 
 # Masterfile creation
 ACS_Codes = ['B19013'] + [f'B19013{chr(i)}' for i in range(ord('A'), ord('I') + 1)]
-masterfile_creation(ACS_Codes, API_key = os.environ['SECRET_KEY'], batch_size = 50) # <- More conservative, as to not trigger a false DDOS
+masterfile_creation(ACS_Codes, API_key = os.environ['SECRET_KEY'], batch_size = 150) # <- More conservative, as to not trigger a false DDOS
 
 # Dollar-adjusting columns
 cpi_adjust_cols(ACS_Codes, 'B19013')

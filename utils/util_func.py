@@ -137,7 +137,7 @@ def ACS_data_extraction(ACS_code: str,
     try:
         files = asyncio.run( url_extract(urls, batch_size) )
     except:
-        file = asyncio.run( url_extract(urls, batch_size) )
+        files = asyncio.run( url_extract(urls, batch_size) )
         
     df_list = []
     for file_info, file in zip(dummy_dict.values(), files):
