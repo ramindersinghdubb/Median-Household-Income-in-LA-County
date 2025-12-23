@@ -422,7 +422,3 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
 
         JSON_file_path = f'{masterfiles_folder}{ABBREV_NAME}_masterfile.json'
         dummy_df.to_json(JSON_file_path, orient='records')
-
-ACS_CODES = ['B19013_001E'] + [f'B19013{chr(i)}_001E' for i in range(ord('A'), ord('I') + 1)]
-for i in ACS_CODES:
-    print(i)
