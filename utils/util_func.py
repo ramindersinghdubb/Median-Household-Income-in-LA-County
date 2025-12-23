@@ -361,8 +361,10 @@ def census_cpi_series():
                 headers = headers)
     with open('data/r-cpi-u-rs.xlsx', 'wb') as file:
         file.write(r.content)
-
-    df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5)
+    try:
+        df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'openpyxl')
+    except:
+        df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'calamine')
     df = df[['YEAR', 'AVG']].dropna()
 
     for YEAR in df['YEAR']:
