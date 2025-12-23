@@ -200,7 +200,7 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str):
     """
     df_list = []
     
-    ACS_codes = make_list_type(ACS_Codes)
+    ACS_codes = make_list_type(ACS_codes)
     for ACS_code in ACS_codes:
         
         # Data extraction
@@ -399,6 +399,9 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
     # Target those columns for which we wish to adjust
     COL_STRINGS = make_list_type(col_strings)
     TARGET_COLS = [col for col in df.columns if any(COL_STRING in col for COL_STRING in COL_STRINGS)]
+
+    if len(TARGET_COLS) == 0:
+        return
 
     # Always use the most recent year in the data to specify which dollars to use.
     REC_YEAR = max(df['YEAR'].unique())
