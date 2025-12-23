@@ -81,7 +81,7 @@ app.layout = dbc.Container([
                         )
         ], style = {'display': 'inline-block',
                     'margin': '0 0',
-                    'padding': '0px 15px 0px 0px',
+                    'padding': '30px 15px 0px 0px',
                     'width': '22.5%'
                    }
                 ),
@@ -102,7 +102,7 @@ app.layout = dbc.Container([
             dcc.Dropdown(id          = 'demographics-dropdown',
                          placeholder = 'Select a racial demographic',
                          options     = DEMOGRAPHICS_OPTIONS,
-                         value       = 'B19013',
+                         value       = 'B19013_001E',
                          clearable   = False
                         )
         ], style = {'display': 'inline-block',
@@ -119,7 +119,7 @@ app.layout = dbc.Container([
         ], style = {'display': 'inline-block',
                     'padding': '30px 30px 0px 0px',
                     'margin': '0 0',
-                    'width': '30.0%'
+                    'width': '27.5%'
                    }
                 ),
     ], style={"padding": "0px 0px 10px 15px"}, className = 'row'
@@ -170,6 +170,7 @@ app.layout = dbc.Container([
     dcc.Store( id = 'LAT-LON' ),
     dcc.Store( id = 'YEAR_PLACE_OPTIONS', data = YEAR_PLACE_OPTIONS ),
     dcc.Store( id = 'PLACE_YEAR_OPTIONS', data = PLACE_YEAR_OPTIONS ),
+    dcc.Store( id = 'DEMOGRAPHICS_OPTIONS', data = DEMOGRAPHICS_OPTIONS )
 
 ], style = {'background-color': LightBrown_color, "padding": "0px 0px 20px 0px",})
 
@@ -295,8 +296,15 @@ app.clientside_callback(
 # Map title
 app.clientside_callback(
     """
-    function(selected_demographic, selected_place, selected_year) {
-        return [selected_demographic, selected_place, selected_year];
+    function(selected_demographic, selected_year, DEMOGRAPHICS_OPTIONS, MASTERFILE) {
+        var my_array = MASTERFILE.filter(item => item['YEAR'] === selected_year);
+        var city_array = my_array.map(({CITY}) => CITY);
+        var selected_city = city_array[0];
+
+        var demographic = DEMOGRAPHICS_OPTIONS.filter(item => item['value'] == selected_demographic);
+        var demographic = demographic[0]['label']['props']['children'];
+
+        return [demographic, selected_city, selected_year];
     }
     """,
     [Output('map-title1', 'children'),
@@ -304,25 +312,27 @@ app.clientside_callback(
      Output('map-title3', 'children')
     ],
     [Input('demographics-dropdown', 'value'),
-     Input('place-dropdown', 'value'),
      Input('year-dropdown', 'value'),
+     Input('DEMOGRAPHICS_OPTIONS', 'data'),
+     Input('MASTERFILE', 'data'),
     ]
 )
 
 # Plot title
 app.clientside_callback(
     """
-    function(selected_place, selected_tract) {
+    function(selected_tract, MASTERFILE) {
         if (selected_tract == undefined){
             return "Please click on a tract.";
         } else {
-            return `${selected_place}, ${selected_tract}`;
+            var selected_city = MASTERFILE[0]['CITY'];
+            return `${selected_city}, ${selected_tract}`;
         }
     }
     """,
     Output('plot-title', 'children'),
-    [Input('place-dropdown', 'value'),
-     Input('census-tract-dropdown', 'value')
+    [Input('census-tract-dropdown', 'value'),
+     Input('MASTERFILE', 'data')
     ]
 )
 
@@ -337,7 +347,7 @@ app.clientside_callback(
     function(selected_demographic, selected_place, selected_year, selected_tract, MASTERFILE, LAT_LON){
         var my_array = MASTERFILE.filter(item => item['YEAR'] == selected_year);
         
-        var url_path = `https://raw.githubusercontent.com/ramindersinghdubb/Median-Household-Income-in-LA-County/refs/heads/main/data/mastergeometries/{selected_year}_mastergeometry.geojson`;
+        var url_path = `https://raw.githubusercontent.com/ramindersinghdubb/Median-Household-Income-in-LA-County/refs/heads/main/data/mastergeometries/${selected_year}_mastergeometry.geojson`;
         
         var locations_array = my_array.map(({GEO_ID}) => GEO_ID);
         var customdata_array = my_array.map(({TRACT}) => TRACT);
@@ -347,7 +357,7 @@ app.clientside_callback(
         const lon_center = lat_lon_array[0]['LON_CENTER'];
         const lat_center = lat_lon_array[0]['LAT_CENTER'];
 
-        var z_array = my_array.map( ( {eval(selected_demographic)} ) => eval(selected_demographic));
+        eval(`var z_array = my_array.map( ( {${selected_demographic}} ) => ${selected_demographic});`)
         
         if (selected_demographic == 'B19013_001E') {
             var map_title = "<b style='font-size:15px;'>Overall Population</b>  <br>";
@@ -375,8 +385,8 @@ app.clientside_callback(
         var strings = my_array.map(function(item) {
             return "<b style='font-size:16px;'>" + item['TRACT'] + "</b><br>" + item['CITY'] + ", Los Angeles County<br><br>"
             + map_title
-            + "Median Household Income: <b style='font-size:14px; color:#597D35'>" + item[`{selected_demographic}_string`] + "</b>  <br>"
-            + "Margin of Error: <b style='font-size:14px; color:#597D35'>"         + item[`{selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
+            + "Median Household Income: <b style='font-size:14px; color:#597D35'>" + item[`${selected_demographic}_string`] + "</b>  <br>"
+            + "Margin of Error: <b style='font-size:14px; color:#597D35'>"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
             + "<extra></extra>";
         });
         
@@ -388,9 +398,9 @@ app.clientside_callback(
             'featureidkey': 'properties.GEO_ID',
             'colorscale': 'Greens',
             'reversescale': true,
-            'z': x_array,
+            'z': z_array,
             'zmin': 0, 'zmax': 200000,
-            'marker': {'line': {'color': '#020403', 'width': 1.75}, 'opacity': 0.4},
+            'marker': {'line': {'color': '#020403', 'width': 1.75}, 'opacity': 0.7},
             'text': strings,
             'colorbar': {'outlinewidth': 2,
                          'ticklabelposition': 'outside bottom',
@@ -424,7 +434,7 @@ app.clientside_callback(
                 'showscale': false,
                 'z': aux_z_array,
                 'zmin': 0, 'zmax': 1,
-                'marker': {'line': {'color': '#04D9FF', 'width': 4}},
+                'marker': {'line': {'color': '#E3242B', 'width': 4}},
                 'selected': {'marker': {'opacity': 0.4}},
                 'hoverinfo': 'skip',
             }
@@ -456,7 +466,7 @@ app.clientside_callback(
             var my_array = my_array.sort((a, b) => a.YEAR - b.YEAR);
 
             var x_array = my_array.map( ({YEAR}) => YEAR );
-            var y_array = my_array.map( ({ eval(selected_demographic) }) => eval(selected_demographic));
+            eval(`var y_array = my_array.map( ( { ${selected_demographic} } ) => ${selected_demographic});`)
 
             if (selected_demographic == 'B19013_001E') {
                 var plot_title_text = "<b style='font-size:15px;'>Overall Population</b>  <br>";

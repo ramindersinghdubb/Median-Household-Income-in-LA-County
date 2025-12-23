@@ -69,7 +69,7 @@ DEMOGRAPHICS_OPTIONS = [{'label': html.Span([i], style = {'color': '#151E3D'}), 
 footer_string = f"""
 ### <b style='color:#800000;'>Information</b>
 
-This website allows you to view median household income in the past 12 months (in 2023 Consumer Price Index-adjusted dollars) for various census tracts across various cities in Los Angeles county. <br>
+This website allows you to view median household income in the past 12 months (in {max(ALL_YEARS)} Consumer Price Index-adjusted dollars) for various census tracts across various cities in Los Angeles county. <br>
 
 Use the dropdowns to choose a city of interest and a year of interest. You can also choose to visualize median household income for various racial demographics. <br>
 
@@ -88,9 +88,9 @@ plot to view additional information on median household income by racial demogra
    retirement, survivor, or disability pensions; and all other income. Income is reported for the past 12 months from the date of the interview. The estimates are inflation-adjusted
    using the Consumer Price Index.</q> (Chapter 6) </blockquote>
 
-2. Data for median household income in the past 12 months (in 2023 inflation-adjusted dollars) were taken from the United States Census Bureau <u style='color:#800000;'><a href="https://www.census.gov/programs-surveys/acs.html" style='color:#800000;'>American Community Survey</a></u> (ACS codes B19013, B19013A, B19013B, B19013C, B19013D, B19013E, B19013F, B19013G, B19013H and B19013I). Adjustment to 2023 Consumer Price Index-dollars is conducted with the <u style='color:#800000;'><a href="https://www.census.gov/topics/income-poverty/income/guidance/current-vs-constant-dollars.html" style='color:#800000;'>Chained Consumer Price Index for All Urban Consumers (C-CPI-U) series</a></u>.
+2. Data for median household income in the past 12 months (in {max(ALL_YEARS)} inflation-adjusted dollars) were taken from the United States Census Bureau <u style='color:#800000;'><a href="https://www.census.gov/programs-surveys/acs.html" style='color:#800000;'>American Community Survey</a></u> (ACS codes B19013, B19013A, B19013B, B19013C, B19013D, B19013E, B19013F, B19013G, B19013H and B19013I). Adjustment to {max(ALL_YEARS)} Consumer Price Index-dollars is conducted with the <u style='color:#800000;'><a href="https://www.census.gov/topics/income-poverty/income/guidance/current-vs-constant-dollars.html" style='color:#800000;'>Consumer Price Index Retroactive Series (R-CPI-U-RS)</a></u>.
 3. Redistricting over the years affects the availability of some census tracts in certain cities. Unavailability of data for certain census tracts during select years may affect whether or not census tracts are displayed on the map. For these reasons, some census tracts and their data may only be available for a partial range of years.
-4. The American Community Survey caps the imputation of median household incomes at $250k. As a result, some data on select census tracts may be unavailable in virtue of being higher than those permissible by these thresholds.
+4. The American Community Survey caps the imputation of median household incomes at $250K. As a result, some data on select census tracts may be unavailable in virtue of being higher than those permissible by these thresholds.
 
 ### <b style='color:#800000;'>Disclaimer</b>
 
@@ -123,10 +123,10 @@ geodata_map = html.Div([
     )
 ])
 
-# Container for rent plot
+# Container for income plot
 geodata_plot = html.Div([
     dcc.Graph(
-        id = "rent_plot",
+        id = "income_plot",
         config={'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'select2d', 'resetview'],
                 'displaylogo': False
                },
