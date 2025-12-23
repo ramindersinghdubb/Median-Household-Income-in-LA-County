@@ -341,6 +341,7 @@ def lat_lon_center_points():
 
 
 # ---- CPI Series ---- #
+
 def census_cpi_series():
     """
     Store the Bureau of Labor Statistics' Retroactive CPI for all Urban Customers (R-CPI-U-RS)
@@ -359,12 +360,11 @@ def census_cpi_series():
 
     r = req.get("https://www.bls.gov/cpi/research-series/r-cpi-u-rs-allitems.xlsx",
                 headers = headers)
+    
     with open('data/r-cpi-u-rs.xlsx', 'wb') as file:
         file.write(r.content)
-    try:
-        df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'openpyxl')
-    except:
-        df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'calamine')
+    
+    df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'openpyxl')
     df = df[['YEAR', 'AVG']].dropna()
 
     for YEAR in df['YEAR']:
@@ -391,7 +391,8 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
     """
     
     # To ensure the R-CPI-U-RS series exists
-    census_cpi_series()
+    if not os.path.exists('data/r-cpi-u-rs.csv'):
+        return
 
     # Re-concatenate the files. Otherwise, each time the code executes, the values will
     # multiply ad infinitum on the already downloaded (and concatenated) masterfiles.
@@ -434,3 +435,6 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
 
         JSON_file_path = f'{masterfiles_folder}{ABBREV_NAME}_masterfile.json'
         dummy_df.to_json(JSON_file_path, orient='records')
+
+if __name__ == '__main__':
+    census_cpi_series() # <- Could not locate the BLS API for retroactive series. Hence, this will be manually imputed, usually on an annual basis.
