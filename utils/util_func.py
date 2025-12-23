@@ -423,7 +423,7 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
 
     df = pd.merge(df, CPI_df, on = ['YEAR'], how = 'left')
     for TARGET_COL in TARGET_COLS:
-        df[TARGET_COL] = df[TARGET_COL] * df[f'{REC_YEAR}_ADJ_FACTOR']
+        df[TARGET_COL] = round(df[TARGET_COL] * df[f'{REC_YEAR}_ADJ_FACTOR'])
     
     df = df.drop([f'{REC_YEAR}_ADJ_FACTOR'], axis = 1)
     
