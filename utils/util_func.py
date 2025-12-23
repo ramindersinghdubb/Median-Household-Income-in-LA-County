@@ -359,16 +359,20 @@ def census_cpi_series():
 
     r = req.get("https://www.bls.gov/cpi/research-series/r-cpi-u-rs-allitems.xlsx",
                 headers = headers)
-    file_path = 'data/r-cpi-u-rs.csv'
-    
-    df = pd.read_excel(r.content, header = 5)
+    with open('data/r-cpi-u-rs.xlsx', 'wb') as file:
+        file.write(r.content)
+
+    df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5)
     df = df[['YEAR', 'AVG']].dropna()
 
     for YEAR in df['YEAR']:
         ind_val = df.loc[df['YEAR'] == YEAR, 'AVG'].iat[0]
         df[f'{YEAR}_ADJ_FACTOR'] = round(ind_val / df['AVG'], 5)
     
+    file_path = 'data/r-cpi-u-rs.csv'
     df.to_csv(file_path, index = False)
+
+    os.remove('data/r-cpi-u-rs.xlsx')
 
 # ---- Inflation-adjust columns ---- #
 def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) -> None:
