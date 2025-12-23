@@ -71,7 +71,7 @@ index_df = LA_cities_2020[['FIPS', 'NAME', 'ABBREV_NAME']]
 
 # ---- Asynchronous Functions for ETL ---- #
 async def _request(url: str):
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.get(url) as resp:
             if resp.status == 200:
                 return await resp.json()
@@ -134,7 +134,10 @@ def ACS_data_extraction(ACS_code: str,
             dummy_dict[url] = (FIPS, year, city_name, dummy_name)
 
     urls = list( dummy_dict.keys() )
-    files = asyncio.run( url_extract(urls, batch_size) )
+    try:
+        files = asyncio.run( url_extract(urls, batch_size) )
+    except:
+        file = asyncio.run( url_extract(urls, batch_size) )
         
     df_list = []
     for file_info, file in zip(dummy_dict.values(), files):
@@ -188,7 +191,7 @@ def ACS_data_extraction(ACS_code: str,
 
 
 # ---- Masterfile Function ---- #
-def masterfile_creation(ACS_codes: str | List[str], API_key: str):
+def masterfile_creation(ACS_codes: str | List[str], API_key: str, batch_size: int = 250):
     """
     Create place-segmented masterfiles on the specified ACS codes.
     
@@ -197,6 +200,9 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str):
 
     :param API_key: Census Bureau API key to allow for >50 url requests in a session.
     :type API_key: str
+
+    :param batch_size: Batch size for rate-checking the asynchronous url extraction. Default '250'.
+    :type batch_size: int
     """
     df_list = []
     
@@ -204,7 +210,7 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str):
     for ACS_code in ACS_codes:
         
         # Data extraction
-        ACS_data_extraction(ACS_code, API_key)
+        ACS_data_extraction(ACS_code, API_key, batch_size = batch_size)
 
         # Data concatenation
         dummy_list = []
