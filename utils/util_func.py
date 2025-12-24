@@ -7,8 +7,22 @@ from typing import Any, List
 from functools import reduce
 from warnings import filterwarnings
 import os, shutil, asyncio, unicodedata, json, aiohttp
-
 filterwarnings('ignore')
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel("INFO")
+
+console_handler = logging.StreamHandler()
+logger_fmt = logging.Formatter(
+    fmt     = "%(asctime)s - %(name)s, %(funcName)s function (Line %(lineno)s): %(levelname)s - %(message)s",
+    datefmt = "%m-%d-%Y, %I:%M:%S %p"
+)
+console_handler.setFormatter(logger_fmt)
+logger.addHandler(console_handler)
+
+
 
 # Folder paths
 data_folder = f"{os.getcwd()}/data/"
@@ -65,9 +79,7 @@ ca2020['NAME'] = ca2020['PLACENAME'].str.replace(' CDP', "").str.replace(' city'
 ca2020['NAME'] = append_counties_to_cities(ca2020['NAME'], ca2020['COUNTIES'])
 ca2020['ABBREV_NAME'] = [ remove_accents(i).replace(" ", "") for i in ca2020['NAME'] ]
 
-LA_cities_2020 = ca2020[ca2020.COUNTIES.str.contains('Los Angeles County')]
-
-index_df = LA_cities_2020[['FIPS', 'NAME', 'ABBREV_NAME']]
+index_df = ca2020[['FIPS', 'NAME', 'ABBREV_NAME']][ca2020.COUNTIES.str.contains('Los Angeles County')]
 
 # ---- Asynchronous Functions for ETL ---- #
 async def _request(url: str):
@@ -75,11 +87,16 @@ async def _request(url: str):
         async with session.get(url) as resp:
             if resp.status == 200:
                 return await resp.json()
+            else:
+                logger.warning('URL %s failed with HTTPS Code %s. Skipping.', url, resp.status)
 
 async def url_extract(urls: list[str], batch_size: int):
     results = []
     for i in range(0, len(urls), batch_size):
+        logger.info('Running %sth batch extraction...', round(i / batch_size))
         results.extend( await asyncio.gather(*[_request(u) for u in urls[i:i+batch_size]]) )
+        logger.info('Successfully ran %sth batch!', round(i / batch_size))
+    logger.info('All urls extracted!')
     return results
 
 
@@ -90,21 +107,28 @@ def ACS_data_extraction(ACS_code: str,
                         final_year: int = datetime.now().year,
                         batch_size: int = 250) -> None:
     """
-    ETL function that creates formatted .CSV files for all places in SoCal on the specified American Community Survey (ACS) code.
+    ETL function that creates formatted .CSV files for specified geographic levels (via FIPS codes)
+    on the specified American Community Survey (ACS) code.
     
     Parameters
     -----------
-    ACS_code (str) : ACS code for data of interest.
+    :param ACS_code: American Community Survey (ACS) code for data of interest.
+    :type ACS_code: str
 
-    API_key (str) : Census Bureau API key to allow for >50 url requests in a session.
-    
-    initial_year (int) : Starting year. Default '2010'.
+    :param API_key: Census Bureau API key to allow for >50 url requests in a session.
+    :type API_key: str
 
-    final_year (int) : Final year. Default current year.
+    :param initial_year: Starting year for data extraction. Default '2010'.
+    :type initial_year: int
 
-    batch_size (int) : Batch size for rate-checking the asynchronous url extraction. Default '250'.
+    :param final_year: Final year for data extraction. Default current year.
+    :type final_year: int
+
+    :param batch_size: Batch size for rate-checking the asynchronous url extraction. Default '250'.
+    :type batch_size: int
     
     """
+    logger.info('Starting extraction for ACS code %s', ACS_code)
     # Folder paths
     tmp_folder = data_folder + "tmp/"
     masterfiles_ACS_folder = masterfiles_folder + f'ACS_Codes/{ACS_code}/'
@@ -125,23 +149,30 @@ def ACS_data_extraction(ACS_code: str,
     for year in range(initial_year, final_year + 1):
         ACS_df_file_path = masterfiles_ACS_folder + f'{ACS_code}_{year}_masterfile.csv'
         if os.path.exists(ACS_df_file_path):
+            logger.warning('ACS code %s masterfile already exists for %s. Moving to %s...', ACS_code, year, year + 1)
             continue
         
         for FIPS in index_df.FIPS:
             url = f'https://api.census.gov/data/{year}/acs/acs5{spec}?get=group({ACS_code})&ucgid=pseudo(1600000US{FIPS}$1400000)&key={API_key}'
-            city_name = index_df.loc[index_df.FIPS == FIPS, 'NAME'].iloc[0]
-            dummy_name = index_df.loc[index_df.FIPS == FIPS, 'ABBREV_NAME'].iloc[0]
+            city_name = index_df.loc[index_df.FIPS == FIPS, 'NAME'].iat[0]
+            dummy_name = index_df.loc[index_df.FIPS == FIPS, 'ABBREV_NAME'].iat[0]
             dummy_dict[url] = (FIPS, year, city_name, dummy_name)
 
     urls = list( dummy_dict.keys() )
+
     try:
         files = asyncio.run( url_extract(urls, batch_size) )
     except:
+        logger.exception(
+            "An exception was raised when trying to batch url extract. Try lowering the batch size? Running once more..."
+        )
         files = asyncio.run( url_extract(urls, batch_size) )
         
     df_list = []
+    logger.info('Cleaning extracted files...')
     for file_info, file in zip(dummy_dict.values(), files):
         if file == None:
+            logger.warning('No file info for the following: %s', file_info)
             continue
 
         FIPS, year, city_name, dummy_name = file_info
@@ -173,19 +204,23 @@ def ACS_data_extraction(ACS_code: str,
             df.to_csv(cleaned_file_path, index=False)
             df_list.extend(df.to_dict('records'))
 
-        except pd.errors.EmptyDataError:
+        except:
+            logger.exception('Encountered a file with following file info: %s. Traceback:', file_info)
             continue
     
     if len(df_list) == 0:
+        logger.info('There were no new files. Done!')
         pass
 
     else:
+        logger.info('All files cleaned!')
         dummy_df = pd.DataFrame(df_list)
             
         for year in dummy_df.YEAR.unique():
             df = dummy_df[dummy_df.YEAR == year]
             ACS_df_file_path = masterfiles_ACS_folder + f'{ACS_code}_{year}_masterfile.csv'
             df.to_csv(ACS_df_file_path, index=False)
+        logger.info('Done!')
     
     shutil.rmtree(tmp_folder)
 
@@ -195,8 +230,8 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str, batch_size: in
     """
     Create place-segmented masterfiles on the specified ACS codes.
     
-    :param ACS_code: Description
-    :type ACS_code: List[str]
+    :param ACS_code: American Community Survey (ACS) code(s) for data of interest.
+    :type ACS_code: str | List[str]
 
     :param API_key: Census Bureau API key to allow for >50 url requests in a session.
     :type API_key: str
@@ -207,6 +242,7 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str, batch_size: in
     df_list = []
     
     ACS_codes = make_list_type(ACS_codes)
+    logger.info('Concatenating ACS Codes: %s', ACS_codes)
     for ACS_code in ACS_codes:
         
         # Data extraction
@@ -219,8 +255,10 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str, batch_size: in
                 dummy_list.append( pd.read_csv( os.path.join(root, file) ) )
         dummy_df = pd.concat(dummy_list, ignore_index = True)
         df_list.append( dummy_df )
+    logger.info('Files concatenated!')
 
     # Segmentation
+    logger.info('Segmenting concatenated files by year...')
     df = reduce(lambda left, right: pd.merge(left, right, on = ['YEAR', 'GEO_ID', 'TRACT', 'CITY', 'COUNTY', 'STATE', 'ABBREV_NAME'], how = 'left'),
                 df_list)
     for ABBREV_NAME in df.ABBREV_NAME.unique():
@@ -231,19 +269,21 @@ def masterfile_creation(ACS_codes: str | List[str], API_key: str, batch_size: in
 
         JSON_file_path = f'{masterfiles_folder}{ABBREV_NAME}_masterfile.json'
         dummy_df.to_json(JSON_file_path, orient='records')
+    logger.info('Files have been segmented by year!')
     
     # Reference TXT file containing the earliest and most recent years of data for each city
     with open(f'{data_folder}reference.txt', 'w') as txtfile:
         txtfile.write("CITY|ABBREV_NAME|INITIAL_YEAR|RECENT_YEAR")
         txtfile.write("\n")
         for ABBREV_NAME in df['ABBREV_NAME'].unique():
-            CITY = df.loc[df['ABBREV_NAME'] == ABBREV_NAME, 'CITY'].iloc[0]
+            CITY = df.loc[df['ABBREV_NAME'] == ABBREV_NAME, 'CITY'].iat[0]
             years = list(sorted(df['YEAR'][df['ABBREV_NAME'] == ABBREV_NAME].unique()))
             INT_YEAR = min(years)
             REC_YEAR = max(years)
             content = '|'.join([CITY, ABBREV_NAME, str(INT_YEAR), str(REC_YEAR)])
             txtfile.write(content)
             txtfile.write('\n')
+    logger.info('Created data/reference.txt containing all cities and years of data availablity.')
 
 
 # ---- Mastergeometry Function ---- #
@@ -263,6 +303,7 @@ def mastergeometry_creation():
     for year in years:
         file_path = mastergeometries_folder + f'{year}_mastergeometry.geojson'
         if os.path.exists(file_path):
+            logger.info('TIGER files have already been extracted for %s. Location: %s', year, file_path)
             continue
 
         if year == 2010:
@@ -272,6 +313,7 @@ def mastergeometry_creation():
         
         r = req.get(zip_file_url)
         if r.status_code == 200:
+            logger.info('Extracting and formatting TIGER files for %s...', year)
             gdf = gpd.read_file(zip_file_url)
 
             if year == 2010:
@@ -310,6 +352,8 @@ def mastergeometry_creation():
             
             dummy_gdf.to_file(file_path, driver='GeoJSON')
 
+            logger.info('TIGER files extracted! File path: %s', file_path)
+
 
 # ---- Lat/Lon Center Points Function ---- #
 def lat_lon_center_points():
@@ -329,15 +373,17 @@ def lat_lon_center_points():
         gdf = gpd.read_file(mastergeometry_file)
         YEAR = gdf.loc[:, 'YEAR'][0]
         
+        logger.info('Creating latitudinal/longitudinal center points for %s from %s...', YEAR, mastergeometry_file)
         with open(f'{lat_lon_center_points_folder}{YEAR}_latlon_center_points.json', 'w') as jsonfile:
             json_list = []
             for ABBREV_NAME in sorted(gdf['ABBREV_NAME'].unique()):
-                CITY = gdf.loc[gdf['ABBREV_NAME'] == ABBREV_NAME, 'CITY'].iloc[0]
+                CITY = gdf.loc[gdf['ABBREV_NAME'] == ABBREV_NAME, 'CITY'].iat[0]
                 LAT_CENTER, LON_CENTER = map(lambda x: str(round(x, 10)), gdf[['INTPTLAT', 'INTPTLON']][gdf['ABBREV_NAME'] == ABBREV_NAME].mean(axis=0))
                 content = {"CITY": CITY, "ABBREV_NAME": ABBREV_NAME, "LAT_CENTER": LAT_CENTER, "LON_CENTER": LON_CENTER}
                 json_list.append(content)
 
             json.dump(json_list, jsonfile)
+        logger.info('Created!')
 
 
 # ---- CPI Series ---- #
@@ -349,6 +395,9 @@ def census_cpi_series():
 
     This will be used to adjust income/earnings estimates for cross-year comparisons in constant
     dollars.
+
+    Note that this must be manually run, as the Bureau hampers automated scraping for non-publication
+    data on their website.
     """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -361,8 +410,12 @@ def census_cpi_series():
     r = req.get("https://www.bls.gov/cpi/research-series/r-cpi-u-rs-allitems.xlsx",
                 headers = headers)
     
-    with open('data/r-cpi-u-rs.xlsx', 'wb') as file:
-        file.write(r.content)
+    try:
+        with open('data/r-cpi-u-rs.xlsx', 'wb') as file:
+            file.write(r.content)
+        logger.info('Extracted BLS R-CPI-U-RS series!')
+    except:
+        logger.exception('Could not access BLS R-CPI-U-RS series. HTTPS Error code %s. Traceback:', r.status_code)
     
     df = pd.read_excel('data/r-cpi-u-rs.xlsx', header = 5, engine = 'openpyxl')
     df = df[['YEAR', 'AVG']].dropna()
@@ -379,9 +432,9 @@ def census_cpi_series():
 # ---- Inflation-adjust columns ---- #
 def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) -> None:
     """
-    Dollar-adjust columns, which contain any one of the desired strings, for the ACS datasets
-    with the Bureau of Labor Statistics' Retroactive CPI for all Urban Customers (R-CPI-U-RS)
-    series. 
+    Dollar-adjust columns (which contain any one of the desired strings) for American Community
+    Survey datasets with the Bureau of Labor Statistics' Retroactive CPI for all Urban Customers
+    (R-CPI-U-RS) series. 
     
     :param ACS_Codes: The ACS code(s) corresponding to the downloaded ACS dataset(s). Note that these datasets must already be downloaded.
     :type ACS_Codes: str | List[str]
@@ -392,13 +445,13 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
     
     # To ensure the R-CPI-U-RS series exists
     if not os.path.exists('data/r-cpi-u-rs.csv'):
+        logger.warning('BLS R-CPI-U-RS is not on file!')
         return
 
     # Re-concatenate the files. Otherwise, each time the code executes, the values will
     # multiply ad infinitum on the already downloaded (and concatenated) masterfiles.
-    ACS_CODES = make_list_type(ACS_Codes)
     df_list = []
-    for ACS_CODE in ACS_CODES:
+    for ACS_CODE in make_list_type(ACS_Codes):
         dummy_list = []
         for root, dirs, files in os.walk(f'{masterfiles_folder}ACS_Codes/{ACS_CODE}'):
             for file in files:
@@ -435,6 +488,7 @@ def cpi_adjust_cols(ACS_Codes: str | List[str], col_strings: str | List[str]) ->
 
         JSON_file_path = f'{masterfiles_folder}{ABBREV_NAME}_masterfile.json'
         dummy_df.to_json(JSON_file_path, orient='records')
+    logger.info('Columns have been adjusted!')
 
 if __name__ == '__main__':
     census_cpi_series() # <- Could not locate the BLS API for retroactive series. Hence, this will be manually imputed, usually on an annual basis.

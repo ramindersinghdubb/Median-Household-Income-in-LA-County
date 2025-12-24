@@ -36,9 +36,8 @@ app = Dash(__name__,
            external_stylesheets = [dbc.themes.SIMPLEX, "assets/style.css"],
            meta_tags = [{"name": "viewport", "content": "width=device-width, initial-scale=1"}]
            )
-server=app.server
+server = app.server
 app.title = 'Median Household Income in Los Angeles County'
-
 
 
 app.layout = dbc.Container([
@@ -113,9 +112,9 @@ app.layout = dbc.Container([
                          clearable   = True
                         )],
             width = 12, md = 6, xl = 3,
-            style = {'margin': '0 0', 'padding': '30px 30px 0px 0px'}),
+            style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
         ], align = 'center', justify = 'center')
-    ], style = {"padding": "0px 0px 10px 15px"}),
+    ], style = {'padding': '0px 0px 10px 15px'}),
     
     # Map and plot
     html.Div([
