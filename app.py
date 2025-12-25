@@ -368,8 +368,8 @@ app.clientside_callback(
         var strings = my_array.map(function(item) {
             return "<b style='font-size:16px;'>" + item['TRACT'] + "</b><br>" + item['CITY'] + ", Los Angeles County<br><br>"
             + map_title
-            + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}`] + "</b>  <br>"
-            + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}`] + "</b>  <br>"
+            + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}_string`] + "</b>  <br>"
+            + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
             + "<extra></extra>";
         });
         
@@ -479,8 +479,8 @@ app.clientside_callback(
             var strings = my_array.map(function(item) {
                 return "<b style='font-size:16px;'>" + item['YEAR'] + "</b><br>" + item['TRACT'] + ", " + item['CITY'] + " <br><br>"
                 + plot_title_text
-                + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}`] + "</b>  <br>"
-                + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}`] + "</b>  <br>"
+                + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}_string`] + "</b>  <br>"
+                + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
                 + "<extra></extra>";
             });
             var upper_strings = my_array.map(function(item) {
