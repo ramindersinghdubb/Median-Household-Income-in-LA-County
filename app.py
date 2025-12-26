@@ -47,7 +47,7 @@ app.layout = dbc.Container([
              style = {'display': 'block',
                 'color': MaroonRed_color,
                 'margin': '0.2em 0',
-                'padding': '0px 0px 0px 0px', # Numbers represent spacing for the top, right, bottom, and left (in that order)
+                'padding': '0px 1.25% 0px 1.25%', # Numbers represent spacing for the top, right, bottom, and left (in that order)
                 'justify-content': 'spacing-around',
                 'display': 'flex',
                 'font-family': 'Trebuchet MS, sans-serif',
@@ -59,7 +59,7 @@ app.layout = dbc.Container([
              style = {'display': 'block',
                 'color': ObsidianBlack_color,
                 'margin': '-0.5em 0',
-                'padding': '0px 0px 0px 0px',
+                'padding': '0px 1.25% 0px 1.25%',
                 'justify-content': 'spacing-around',
                 'display': 'flex',
                 'font-family': 'Trebuchet MS, sans-serif',
@@ -72,7 +72,7 @@ app.layout = dbc.Container([
                 'height': '1px',
                 'border': 0,
                 'margin': '-0.9em 0',
-                'padding': 0,
+                'padding': '0px 1.25% 0px 1.25%',
                 'justify-content': 'spacing-around'
                }),
     
@@ -86,8 +86,8 @@ app.layout = dbc.Container([
                          value       = 'LongBeach',
                          clearable   = False
                         )],
-            width = 12, md = 6, xl = 3,
-            style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
+            width = 12, sm = 12, xl = 3,
+            style = {'margin': '0 0', 'padding': '30px 1.25% 0px 1.25%'}),
         dbc.Col([
             dcc.Dropdown(id          = 'year-dropdown',
                          placeholder = 'Select a year',
@@ -96,8 +96,8 @@ app.layout = dbc.Container([
                          clearable   = False,
                          searchable  = False
                         )],
-            width = 12, md = 6, xl = 1,
-            style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
+            width = 12, sm = 12, xl = 1,
+            style = {'margin': '0 0', 'padding': '30px 1.25% 0px 1.25%'}),
         dbc.Col([
             dcc.Dropdown(id          = 'demographics-dropdown',
                          placeholder = 'Select a racial demographic',
@@ -106,17 +106,17 @@ app.layout = dbc.Container([
                          clearable   = False,
                          searchable  = False
                         )],
-            width = 12, md = 6, xl = 5,
-            style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
+            width = 12, sm = 12, xl = 5,
+            style = {'margin': '0 0', 'padding': '30px 1.25% 0px 1.25%'}),
         dbc.Col([
-            dcc.Dropdown(id          ='census-tract-dropdown',
+            dcc.Dropdown(id          = 'census-tract-dropdown',
                          placeholder = 'Click on a census tract in the map',
                          clearable   = True
                         )],
-            width = 12, md = 6, xl = 3,
-            style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
+            width = 12, sm = 12, xl = 3,
+            style = {'margin': '0 0', 'padding': '30px 1.25% 0px 1.25%'}),
         ], align = 'center', justify = 'center')
-    ], style = {'padding': '0px 0px 10px 15px'}),
+    ], style = {'padding': '0px 2.00% 10px 2.00%'}),
     
     # Map and plot
     html.Div([
@@ -124,10 +124,13 @@ app.layout = dbc.Container([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader(children = [html.B("Median Household Income"), " for ", html.B(id="map-title1"), " in ", html.B(id="map-title2"), " by Census Tract, ", html.B(id="map-title3")],
-                                   style = {'background-color': MaroonRed_color,
-                                            'color': '#FFFFFF'}),
-                    dbc.CardBody([geodata_map],
-                                 style = {'background-color': AlabasterWhite_color})
+                                   style    = {'background-color': MaroonRed_color, 'color': '#FFFFFF'}),
+                    dbc.CardBody([
+                        dcc.Loading(color   = '#29B0F0',
+                                    display = 'show',
+                                    style   = {'position': 'relative', 'margin-top': '75%'}),
+                        geodata_map],
+                        style = {'background-color': AlabasterWhite_color})
                     ])
             ], width = 12, xl = 6),
             dbc.Col([
@@ -140,13 +143,13 @@ app.layout = dbc.Container([
                     ])
             ], width = 12, xl = 6)
         ], align='center', justify='center')
-    ], style = {'padding': '10px 0px 20px 0px'}),
+    ], style = {'padding': '10px 1.05% 20px 1.05%'}),
     
     # Footer
     html.Div([
         fmc.FefferyMarkdown(markdownStr    = footer_string,
                             renderHtml     = True,
-                            style          = {'background': LightBrown_color, 'margin-top': '1em'}
+                            style          = {'background': LightBrown_color, 'margin-top': '1em', 'padding': '0px 2.0% 0px 2.0%'}
                            )
     ]),
 
@@ -157,7 +160,7 @@ app.layout = dbc.Container([
     dcc.Store( id = 'PLACE_YEAR_OPTIONS',   data = PLACE_YEAR_OPTIONS ),
     dcc.Store( id = 'DEMOGRAPHICS_OPTIONS', data = DEMOGRAPHICS_OPTIONS )
 
-], style = {'background-color': LightBrown_color, "padding": "0px 0px 20px 0px",})
+], style = {'background-color': LightBrown_color, "padding": "0px 0px 20px 0px"})
 
 
 
@@ -370,8 +373,8 @@ app.clientside_callback(
         var strings = my_array.map(function(item) {
             return "<b style='font-size:16px;'>" + item['TRACT'] + "</b><br>" + item['CITY'] + ", Los Angeles County<br><br>"
             + map_title
-            + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}_string`] + "</b>  <br>"
-            + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
+            + "Median Household Income: <b style='font-size:14px; color:#597D35'>" + item[`${selected_demographic}_string`] + "</b>  <br>"
+            + "Margin of Error: <b style='font-size:14px; color:#597D35'>"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
             + "<extra></extra>";
         });
         
@@ -455,6 +458,7 @@ app.clientside_callback(
             eval(`var y_margin_arr = my_array.map( ( { ${selected_demographic.replace('_001E', '_001M')} } ) => ${selected_demographic.replace('_001E', '_001M')});`)
             var y_upper_arr = y_array.map((y, idx) => y + y_margin_arr[idx]);
             var y_lower_arr = y_array.map((y, idx) => y - y_margin_arr[idx]);
+            var y_lower_arr = y_lower_arr.map(num => num <= 0 ? 0 : num);
 
             if (selected_demographic == 'B19013_001E') {
                 var plot_title_text = "<b style='font-size:15px;'>Overall Population</b>  <br>";
@@ -481,18 +485,25 @@ app.clientside_callback(
             var strings = my_array.map(function(item) {
                 return "<b style='font-size:16px;'>" + item['YEAR'] + "</b><br>" + item['TRACT'] + ", " + item['CITY'] + " <br><br>"
                 + plot_title_text
-                + "Median Household Income: <b style='font-size:14px; color:#597D35'>$" + item[`${selected_demographic}_string`] + "</b>  <br>"
-                + "Margin of Error: <b style='font-size:14px; color:#597D35'>$"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
+                + "Median Household Income: <b style='font-size:14px; color:#597D35'>" + item[`${selected_demographic}_string`] + "</b>  <br>"
+                + "Margin of Error: <b style='font-size:14px; color:#597D35'>"         + item[`${selected_demographic.replace('_001E', '_001M')}_string`] + "</b>  <br>"
                 + "<extra></extra>";
             });
             var upper_strings = my_array.map(function(item) {
+                const num = (parseFloat(item[`${selected_demographic}`]) + parseFloat(item[`${selected_demographic.replace('_001E', '_001M')}`]));
+                const fmt_num = isNaN(num) ? 'Not available!' : '$' + num.toString();
+
                 return "<b style='font-size:16px;'>" + item['YEAR'] + "</b><br>" + item['TRACT'] + ", " + item['CITY'] + " <br><br>"
-                + "Upper Estimate: <b style='font-size:14px; color:#597D35'>$" + (parseFloat(item[`${selected_demographic}`]) + parseFloat(item[`${selected_demographic.replace('_001E', '_001M')}`])) + "</b>  <br>"
+                + "Upper Estimate: <b style='font-size:14px; color:#597D35'>" + fmt_num + "</b>  <br>"
                 + "<extra></extra>";
             });
             var lower_strings = my_array.map(function(item) {
+                const num = (parseFloat(item[`${selected_demographic}`]) - parseFloat(item[`${selected_demographic.replace('_001E', '_001M')}`]));
+                const fmt_num = isNaN(num) ? 'Not available!' : num <= 0 ? '$0' : '$' + num.toString();
+                
+
                 return "<b style='font-size:16px;'>" + item['YEAR'] + "</b><br>" + item['TRACT'] + ", " + item['CITY'] + " <br><br>"
-                + "Lower Estimate: <b style='font-size:14px; color:#597D35'>$" + (parseFloat(item[`${selected_demographic}`]) - parseFloat(item[`${selected_demographic.replace('_001E', '_001M')}`])) + "</b>  <br>"
+                + "Lower Estimate: <b style='font-size:14px; color:#597D35'>" + fmt_num + "</b>  <br>"
                 + "<extra></extra>";
             });
 
@@ -539,11 +550,11 @@ app.clientside_callback(
                 'uirevision': true,
                 'paper_bgcolor': '#FEF9F3',
                 'plot_bgcolor': '#FEF9F3',
-                'title': {'text': `Median Household Income (CPI-Adjusted Dollars), ${Math.min(...x_array)} to ${Math.max(...x_array)}`,
+                'title': {'text': `<b>Median Household Income</b>, ${Math.min(...x_array)} to ${Math.max(...x_array)}`,
                           'x': 0.05,
                           },
-                'xaxis': {'title': {'text': 'Year', 'ticklabelstandoff': 10}, 'showgrid': false, 'tick0': Math.min(...x_array), 'dtick': 2},
-                'yaxis': {'title': {'text': 'Median Household Income ($)', 'standoff': 15}, 'tickprefix': '$', 'gridcolor': '#E0E0E0', 'ticklabelstandoff': 5},
+                'xaxis': {'title': {'text': '<b>Year</b>', 'ticklabelstandoff': 10, 'font': {'size': 14}}, 'showgrid': false, 'tick0': Math.min(...x_array), 'dtick': 2, 'ticks': '', 'tickfont': {'color': '#666666'}},
+                'yaxis': {'title': {'text': '<b>Income ($)</b>', 'standoff': 15, 'font': {'size': 14}}, 'tickprefix': '$', 'gridcolor': '#E0E0E0', 'ticklabelstandoff': 5, 'ticks': '', 'tickfont': {'color': '#666666'}},
             };
 
             return {'data': data, 'layout': layout};
@@ -566,4 +577,4 @@ app.clientside_callback(
 
 # Execute the app
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=False, port=8051)
