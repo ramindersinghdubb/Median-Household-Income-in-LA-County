@@ -577,4 +577,4 @@ app.clientside_callback(
 
 # Execute the app
 if __name__ == "__main__":
-    app.run(debug=False, port=8051)
+    app.run(debug=False)
