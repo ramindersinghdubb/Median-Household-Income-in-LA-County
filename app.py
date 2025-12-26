@@ -92,8 +92,9 @@ app.layout = dbc.Container([
             dcc.Dropdown(id          = 'year-dropdown',
                          placeholder = 'Select a year',
                          options     = PLACE_YEAR_OPTIONS['LongBeach'],
-                         value       = 2023,
-                         clearable   = False
+                         value       = max(ALL_YEARS),
+                         clearable   = False,
+                         searchable  = False
                         )],
             width = 12, md = 6, xl = 1,
             style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
@@ -102,7 +103,8 @@ app.layout = dbc.Container([
                          placeholder = 'Select a racial demographic',
                          options     = DEMOGRAPHICS_OPTIONS,
                          value       = 'B19013_001E',
-                         clearable   = False
+                         clearable   = False,
+                         searchable  = False
                         )],
             width = 12, md = 6, xl = 5,
             style = {'margin': '0 0', 'padding': '30px 15px 0px 0px'}),
